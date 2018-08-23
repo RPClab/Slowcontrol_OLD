@@ -1,7 +1,6 @@
 #include "mariadb++/account.hpp"
 #include "mariadb++/connection.hpp"
 #include <iostream>
-//#include "Controler.h"
 #include <ctime>
 #include <chrono>
 #include <thread>
