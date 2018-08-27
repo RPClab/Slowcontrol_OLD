@@ -16,29 +16,6 @@
 #include<cstdlib>
 
 
-class Connexion
-{
-        public:
-                void setPassword(const std::string pass){Password=pass;};
-                                       std::string getPassword(){return Password;};
-              
-                void setUser(const std::string nam){User=nam;};
-                                   std::string getUser(){return User;};
-                                   
-                void setHost(std::string hos){Host=hos;};
-                             std::string getHost(){return Host;};
-                             
-                void setWaitingTime(int wait){WaitingTime=wait;};
-               
-                int getWaitingTime(){return WaitingTime;};
-        private:
-                std::string User;
-                std::string Password;
-		        std::string Host;
-                int WaitingTime=0;
-};
-
-
 typedef uint8_t byte; 
 uint8_t I2C_bme280=0x76;
 
@@ -130,38 +107,19 @@ uint32_t bme280_compensate_H_int32(int32_t adc_H)
 
 int _bme280_setByte(byte reg, byte data)
 {
-	#ifdef ARDUINO
-		Wire.beginTransmission(I2C_bme280);
-		Wire.write(reg);
-		Wire.write(data);
-		return (int)(Wire.endTransmission());
-	#else
 		byte config[2];
 		config[0]=reg;
 		config[1]=data;
 		return !i2c_write(I2C_bme280,config,2);
-	#endif
 }
 
 uint16_t _bme280_getReg(byte reg)
 {
-	#ifdef ARDUINO
-		Wire.beginTransmission(I2C_bme280);
-		Wire.write(reg);
-		if( Wire.endTransmission()==0){
-			delay(1);
-			Wire.requestFrom((int)I2C_bme280,(int)1);
-			if(Wire.available()==0) return -2;
-			return Wire.read();
-		}
-		return -1;
-	#else
 		byte data;
 		i2c_write(I2C_bme280,&reg,1);	   // 書込みの実行
 		delay(1);
 		i2c_read(I2C_bme280,&data,1);	   // 読み出し
 		return (int)data;
-	#endif
 }
 
 void _bme280_cal()
@@ -225,12 +183,7 @@ int bme280_init()
 {
 	byte reg,data,in;
 	int i;
-	
-	#ifdef ARDUINO
-		Wire.begin();
-	#else
-		i2c_init();
-	#endif
+    i2c_init();
 	
 	_bme280_cal();
 	
@@ -241,11 +194,7 @@ int bme280_init()
 	//	   | ||_|_____________________ filter[2:0]
 	//	   |_|________________________ t_sb[2:0]
 	if(_bme280_setByte(reg,data)){		// 書込みの実行
-		#ifdef ARDUINO
-			Serial.println("ERROR(11): i2c writing config reg");
-		#else
 			fprintf(stderr,"ERROR(11): i2c writing config reg\n");
-		#endif
 		return 11;
 	}
 	
@@ -253,11 +202,7 @@ int bme280_init()
 	data=0b00000001;
 	//			|_|___________________ osrs_h[2:0]
 	if(_bme280_setByte(reg,data)){		// 書込みの実行
-		#ifdef ARDUINO
-			Serial.println("ERROR(12): i2c writing trl_hum reg");
-		#else
 			fprintf(stderr,"ERROR(12): i2c writing trl_hum reg\n");
-		#endif
 		return 12;
 	}
 	
@@ -267,42 +212,24 @@ int bme280_init()
 	//	   | ||_|_____________________ osrs_p[2:0]
 	//	   |_|________________________ osrs_t[2:0]
 	if(_bme280_setByte(reg,data)){		// 書込みの実行
-		#ifdef ARDUINO
-			Serial.println("ERROR(13): i2c writing ctrl_meas reg");
-		#else
 			fprintf(stderr,"ERROR(13): i2c writing ctrl_meas reg\n");
-		#endif
 		return 13;
 	}	 
 	in=_bme280_getReg(0xD0);
 	if(in != 0x58 && in != 0x60){
-		#ifdef ARDUINO
-			Serial.print("ERROR(21):  chip_id = 0x");
-			Serial.println(in,HEX);
-		#else
 			fprintf(stderr,"ERROR(21):  chip_id (%02X)\n",in);
-		#endif
 		return 21;
 	}
 	for(i=0;i<50;i++){
 		in=_bme280_getReg(0xF3);
 		#ifdef DEBUG
-			#ifdef ARDUINO
-				Serial.print("getReg 0x");
-				Serial.println(in,HEX);
-			#else
 				printf("getReg   %02X\n",in);
-			#endif
 		#endif
 		if((in&0x04)==0) break;
 		delay(20);
 	}
 	if(i==50){
-		#ifdef ARDUINO
-			Serial.println("ERROR(31): failed to read results");
-		#else
 			fprintf(stderr,"ERROR(31): failed to read results\n");
-		#endif
 		return 31;
 	}
 	return 0;
@@ -315,23 +242,15 @@ int bme280_stop()
 	reg= 0xF4;					   	// ctrl_meas
 	data=0x00;
 	ret=_bme280_setByte(reg,data);	// 書込みの実行
-	#ifndef ARDUINO
-		i2c_close();
-	#endif
+    i2c_close();
 	return ret;
 }
 
 void bme280_print(float temp, float hum, float press)
 {
-	#ifdef ARDUINO
-		Serial.print("Temp ="); Serial.println(temp,2);
-		Serial.print("Humi ="); Serial.println(hum,2);
-		Serial.print("Press="); Serial.println(press,2);
-	#else
 		printf("Temperature : %3.2f C",temp);
 		printf("Humidity : %3.2f \%",hum);
 		printf("Pressure : %4.2f\n hPa",press);
-	#endif
 }
 
 
@@ -404,22 +323,22 @@ int main(int argc,char **argv)
         double std_humidity=std::sqrt(var_humidity/(iter-1));
         double std_temperature=std::sqrt(var_temperature/(iter-1));
         
-        char press[50],std_press[50],temp[50],std_temp[50],humid[50],std_humid[50];
+        char press[20],std_press[20],temp[20],std_temp[20],humid[20],std_humid[20];
         std::string strp,strsp,strt,strst,strh,strsh;
         
-        gcvt(mean_pressure,50,press);
+        gcvt(mean_pressure,6,press);
         strp = press;
-        gcvt(std_pressure,50,std_press);
+        gcvt(std_pressure,5,std_press);
         strsp = std_press;
         
-        gcvt(mean_temperature,50,temp);
+        gcvt(mean_temperature,6,temp);
         strt = temp;
-        gcvt(std_temperature,50,std_temp);
+        gcvt(std_temperature,5,std_temp);
         strst = std_temp;
         
-        gcvt(mean_humidity,50,humid);
+        gcvt(mean_humidity,6,humid);
         strh = humid;
-        gcvt(std_humidity,50,std_humid);
+        gcvt(std_humidity,5,std_humid);
         strsh = std_humid;
         
         std::string string1 = "INSERT INTO ";
