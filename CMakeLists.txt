@@ -42,6 +42,10 @@ set_if_not( jsoncpp_repository "https://github.com/RPClab/jsoncpp" )
 set_if_not( jsoncpp_version "master" )
 set_if_not( mariadbpp_repository "https://github.com/RPClab/mariadbpp" )
 set_if_not( mariadbpp_version "master" )
+set_if_not( BME280_repository "https://github.com/RPClab/BME280_driver.git" )
+set_if_not( BME280_version "master" )
+
+
 
 include(ExternalProject)
 
@@ -70,6 +74,19 @@ include(ExternalProject)
                         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
                         PREFIX ${CMAKE_CURRENT_BINARY_DIR}/jsoncpp-prefix
                         SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/jsoncpp
+                        INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+                        LIST_SEPARATOR %
+                        UPDATE_COMMAND ""
+                        )
+    # ----- BME280 package -----
+    ExternalProject_Add( 
+                        bme280
+                        GIT_REPOSITORY ${BME280_repository}
+                        GIT_TAG ${BME280_version}
+                        GIT_PROGRESS TRUE
+                        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+                        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/bme280-prefix
+                        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/bme280
                         INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
                         LIST_SEPARATOR %
                         UPDATE_COMMAND ""
