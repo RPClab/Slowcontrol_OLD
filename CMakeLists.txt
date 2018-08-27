@@ -91,7 +91,7 @@ include(ExternalProject)
                         LIST_SEPARATOR %
                         UPDATE_COMMAND ""
                         )
-add_subdirectory(source/)
+add_subdirectory(source)
 
 
 

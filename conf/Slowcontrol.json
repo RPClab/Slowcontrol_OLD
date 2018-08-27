@@ -1,0 +1,12 @@
+ {
+    "Database":
+    {
+        "User":"sjturpc",
+        "Password": "RPC2018",
+        "Host":"yin",
+        "Database" : "SJTUrpc",
+        "Table" : "slowcontrol"
+    }
+}
+
+
