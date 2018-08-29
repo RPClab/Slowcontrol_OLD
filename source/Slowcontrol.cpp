@@ -281,7 +281,7 @@ int main(int argc,char **argv)
     
      std::string string1 = "INSERT INTO ";
      std::string string2 = database.getName()+"."+database.getTable();
-     std::string string3 = "(sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
+     std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
     
 	while(1)
 	{
@@ -353,7 +353,7 @@ int main(int argc,char **argv)
         strsh = std_humid;
         
        
-        std::string string4 = "VALUES(0,\""+tim.str()+"\","+strp+","+strsp+","+strt+","+strst+","+strh+","+strsh+")";
+        std::string string4 = "VALUES (0,\""+tim.str()+"\","+strp+","+strsp+","+strt+","+strst+","+strh+","+strsh+")";
         
         std::string com= string1 + string2 + string3 + string4;
        // std::cout<<com<<std::endl;
