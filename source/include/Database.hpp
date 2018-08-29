@@ -35,7 +35,7 @@ public:
     {
         Myaccount= mariadb::account::create(params.getParam("Host").String(),params.getParam("User").String(),params.getParam("Password").String());
         m_name=params.getParam("Database").String();
-        m_name=params.getParam("Table").String();
+        m_table=params.getParam("Table").String();
         Myconnection=mariadb::connection::create(Myaccount);
     }
     mariadb::connection_ref& operator()()
