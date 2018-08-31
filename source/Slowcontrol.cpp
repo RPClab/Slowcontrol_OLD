@@ -14,7 +14,7 @@
 #include<cmath>
 #include<string>
 #include<cstdlib>
-
+#include <chrono>
 
 typedef uint8_t byte; 
 uint8_t I2C_bme280=0x76;
@@ -258,10 +258,12 @@ int main(int argc,char **argv)
 {
     //Read ConfigFile
     ConfigReader conf("Slowcontrol","Database");
-    conf.print();
+    //conf.print();
     //Connect to Database
     Database database(conf.getParameters());
-    std::cout<<database()->connect()<<std::endl;
+    database()->connect();
+    ConfigReader opt("Slowcontrol","Options");
+    long time=opt.getParameter("Wait").Long();
     
 	//mariadb::account_ref Myaccount= mariadb::account::create("10.42.0.120","sjturpc","RPC2018");
 	//mariadb::connection_ref Myconnection=mariadb::connection::create(Myaccount);
@@ -285,6 +287,7 @@ int main(int argc,char **argv)
     
 	while(1)
 	{
+        std::chrono::high_resolution_clock::time_point t1=std::chrono::high_resolution_clock::now();
 		std::time_t ti = ::time(nullptr);
 		mariadb::date_time tim(ti);
         
@@ -358,9 +361,11 @@ int main(int argc,char **argv)
         std::string com= string1 + string2 + string3 + string4;
        // std::cout<<com<<std::endl;
         database()->execute(com);
-        
-        
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::cout<<"Mean Pressure : "<<strp<<" ( Std : "<<strsp<<"), Mean Temperature : "<<strt<<" ( Std : "<<strst<<"), Mean Humidity : "<<strh<<" ( Std : "<<strsh<<")"<<std::endl;
+        std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now();
+        long rest=time*1000000-std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();
+        if(rest<=0) std::this_thread::sleep_for(std::chrono::seconds(time));
+	else std::this_thread::sleep_for(std::chrono::microseconds(rest));
 	}
 	  database()->disconnect();
 	  bme280_stop();

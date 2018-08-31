@@ -3,9 +3,13 @@
     {
         "User":"sjturpc",
         "Password": "RPC2018",
-        "Host":"yin",
+        "Host":"10.42.0.1",
         "Database" : "SJTUrpc",
         "Table" : "slowcontrol"
+    },
+    "Options":
+    {
+	"Wait":"60"
     }
 }
 

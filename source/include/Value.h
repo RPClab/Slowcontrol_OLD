@@ -84,6 +84,7 @@ Value& operator=(const T & value)
     unsigned int UInt();
     unsigned int UInt() const;
     long Long();
+long Long() const;
     unsigned long ULong();
     unsigned short UShort()
     {

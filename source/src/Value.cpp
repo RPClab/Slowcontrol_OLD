@@ -164,6 +164,19 @@ long Value::Long()
         throw;
     }
 }
+
+long Value::Long() const
+{
+    try
+    {
+        return std::stol(m_value);
+    }
+    catch(std::exception& e)
+    {
+        std::cout<<"Value : "<<m_value<<" not convertible to long"<<std::endl;
+        throw;
+    }
+}
     
 unsigned long Value::ULong() 
 {

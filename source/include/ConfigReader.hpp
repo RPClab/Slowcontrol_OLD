@@ -52,6 +52,7 @@ public:
         m_params.printParameters();
     }
     const Parameters& getParameters() const { return m_params;}
+    const Value& getParameter(const std::string & val)  { return m_params[val];}
 private:
     std::string getEnvVar( std::string const & key )
     {
