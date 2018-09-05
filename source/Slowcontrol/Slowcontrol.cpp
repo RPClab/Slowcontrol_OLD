@@ -23,14 +23,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-
-/*typedef uint8_t byte; 
-uint8_t I2C_bme280=0x76;*/
-
-// #define DEBUG
-
-// BST-BME280-DS001-11 | Revision 1.2 | October 2015 Bosch Sensortec
-
 template<typename T>
 std::string to_stringN(const T& value, const int&n=3)
 {
@@ -73,7 +65,7 @@ void print_sensor_data(struct bme280_data *comp_data)
 #endif
 }
 
-int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
+bme280_data stream_sensor_data_forced_mode(struct bme280_dev *dev)
 {
   int8_t rslt;
   uint8_t settings_sel;
@@ -88,17 +80,11 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
   settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
 
   rslt = bme280_set_sensor_settings(settings_sel, dev);
-
-  printf("Temperature, Pressure, Humidity\r\n");
-  /* Continuously stream sensor data */
-  while (1) {
-    rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
-    /* Wait for the measurement to complete and print data @25Hz */
-    dev->delay_ms(40);
-    rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
-    print_sensor_data(&comp_data);
-  }
-  return rslt;
+  rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
+  /* Wait for the measurement to complete and print data @25Hz */
+  dev->delay_ms(40);
+  rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
+  return comp_data;
 }
 
 
@@ -106,7 +92,7 @@ int main(int argc,char **argv)
 {
     struct bme280_dev dev;
     int8_t rslt = BME280_OK;
-    if ((fd = open(argv[1], O_RDWR)) < 0) 
+    if ((fd = open("/dev/i2c-1", O_RDWR)) < 0) 
     {
         printf("Failed to open the i2c bus %s", argv[1]);
         exit(1);
@@ -122,19 +108,17 @@ int main(int argc,char **argv)
     dev.write = user_i2c_write;
     dev.delay_ms = user_delay_ms;
     rslt = bme280_init(&dev);
-    stream_sensor_data_forced_mode(&dev);
     //Read ConfigFile
-    //ConfigReader conf("Slowcontrol","Database");
+    ConfigReader conf("Slowcontrol","Database");
     //conf.print();
     //Connect to Database
-   /* Database database(conf.getParameters());
+    Database database(conf.getParameters());
     database()->connect();
     ConfigReader opt("Slowcontrol","Options");
-    long time=opt.getParameter("Wait").Long();    */
-   /* std::string string1 = "INSERT INTO ";
+    long time=opt.getParameter("Wait").Long();
+    std::string string1 = "INSERT INTO ";
     std::string string2 = database.getName()+"."+database.getTable();
     std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
-    std::cout<<std::setprecision(3)<<std::fixed;
 	while(1)
 	{
         std::chrono::high_resolution_clock::time_point t1=std::chrono::high_resolution_clock::now();
@@ -154,10 +138,11 @@ int main(int argc,char **argv)
         
         for(unsigned int i=0;i!=iter;++i)
         {
-            std::tuple<int32_t,uint32_t,uint32_t> results=sensor.getMeasures();
-            pressure.push_back(std::get<0>(results));
-            temperature.push_back(std::get<1>(results));
-            humidity.push_back(std::get<2>(results));
+            bme280_data meas=stream_sensor_data_forced_mode(&dev);
+	    //print_sensor_data(&meas);
+            pressure.push_back(meas.pressure/10000.0);
+            temperature.push_back(meas.temperature/100.0);
+            humidity.push_back(meas.humidity/1000.0);
         }
 	
         double mean_pressure=0;
@@ -192,14 +177,13 @@ int main(int argc,char **argv)
         
         std::string com= string1 + string2 + string3 + string4;
         //std::cout<<com<<std::endl;
-        database()->execute(com);
+        //database()->execute(com);
         std::cout<<tim.str()<<", Mean Pressure : "<<to_stringN(mean_pressure)<<" (Std : "<<to_stringN(std_pressure)<<"), Mean Temperature : "<<to_stringN(mean_temperature)<<" (Std : "<<to_stringN(std_temperature)<<"), Mean Humidity : "<<to_stringN(mean_humidity)<<" (Std : "<<to_stringN(std_humidity)<<")"<<std::endl;
         std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now();
         long rest=time*1000000-std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();
         if(rest<=0) std::this_thread::sleep_for(std::chrono::seconds(time));
 	else std::this_thread::sleep_for(std::chrono::microseconds(rest));
 	}
-	  database()->disconnect();
-	  //bme280_stop();*/
+	database()->disconnect();
 	return 0;
 }
