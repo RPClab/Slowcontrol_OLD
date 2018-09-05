@@ -20,18 +20,6 @@ SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath=${CMAKE_SOURC
 set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_PATH ${CMAKE_SOURCE_DIR}/bin/lib)
 
-
-##I2C Sources
-set(I2C_SRC ${PROJECT_SOURCE_DIR}/com/I2C/soft_i2c.cpp )
-include_directories(${PROJECT_SOURCE_DIR}/com/I2C)
-
-link_directories(${PROJECT_SOURCE_DIR}/bin/lib)
-
-add_library(I2C STATIC ${I2C_SRC} ${INCLUDE_FILES})
-
-## Install executable
-install(TARGETS I2C ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/bin/lib LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/bin/lib)
-
 macro( set_if_not )
     if( NOT ${ARGV0} )
         set( ${ARGN} )
@@ -44,8 +32,6 @@ set_if_not( mariadbpp_repository "https://github.com/RPClab/mariadbpp" )
 set_if_not( mariadbpp_version "master" )
 set_if_not( BME280_repository "https://github.com/RPClab/BME280_driver.git" )
 set_if_not( BME280_version "master" )
-
-
 
 include(ExternalProject)
 
@@ -91,19 +77,4 @@ include(ExternalProject)
                         LIST_SEPARATOR %
                         UPDATE_COMMAND ""
                         )
-add_subdirectory(source/Slowcontrol)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+add_subdirectory(source)

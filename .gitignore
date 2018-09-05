@@ -33,4 +33,5 @@
 
 /bin
 /build
-
+.kdev4/
+Slowcontrol.kdev4
