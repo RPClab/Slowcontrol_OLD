@@ -7,16 +7,18 @@
 #include <set>
 #include <fstream>
 #include <string.h>
-#include "soft_i2c.h"
+//#include "soft_i2c.h"
 #include<vector>
 #include<cmath>
 #include<string>
 #include<cstdlib>
-#include <chrono>
 #include <iomanip>
+#include "BME280.h"
 
-typedef uint8_t byte; 
-uint8_t I2C_bme280=0x76;
+
+
+/*typedef uint8_t byte; 
+uint8_t I2C_bme280=0x76;*/
 
 // #define DEBUG
 
@@ -33,41 +35,41 @@ std::string to_stringN(const T& value, const int&n=3)
 
 
 /* singed integer type*/
-typedef	int8_t s8;/**< used for signed 8bit */
-typedef	int16_t s16;/**< used for signed 16bit */
-typedef	int32_t s32;/**< used for signed 32bit */
-typedef	int64_t s64;/**< used for signed 64bit */
+//typedef	int8_t s8;/**< used for signed 8bit */
+//typedef	int16_t s16;/**< used for signed 16bit */
+//typedef	int32_t s32;/**< used for signed 32bit */
+//typedef	int64_t s64;/**< used for signed 64bit */
 
-typedef	uint8_t u8;/**< used for unsigned 8bit */
-typedef	uint16_t u16;/**< used for unsigned 16bit */
-typedef	uint32_t u32;/**< used for unsigned 32bit */
-typedef	uint64_t u64;/**< used for unsigned 64bit */
+//typedef	uint8_t u8;/**< used for unsigned 8bit */
+//typedef	uint16_t u16;/**< used for unsigned 16bit */
+//typedef	uint32_t u32;/**< used for unsigned 32bit */
+//typedef	uint64_t u64;/**< used for unsigned 64bit */
 
-u16 dig_T1;/**<calibration T1 data*/
-s16 dig_T2;/**<calibration T2 data*/
-s16 dig_T3;/**<calibration T3 data*/
-u16 dig_P1;/**<calibration P1 data*/
-s16 dig_P2;/**<calibration P2 data*/
-s16 dig_P3;/**<calibration P3 data*/
-s16 dig_P4;/**<calibration P4 data*/
-s16 dig_P5;/**<calibration P5 data*/
-s16 dig_P6;/**<calibration P6 data*/
-s16 dig_P7;/**<calibration P7 data*/
-s16 dig_P8;/**<calibration P8 data*/
-s16 dig_P9;/**<calibration P9 data*/
+//u16 dig_T1;/**<calibration T1 data*/
+//s16 dig_T2;/**<calibration T2 data*/
+//s16 dig_T3;/**<calibration T3 data*/
+//u16 dig_P1;/**<calibration P1 data*/
+//s16 dig_P2;/**<calibration P2 data*/
+//s16 dig_P3;/**<calibration P3 data*/
+//s16 dig_P4;/**<calibration P4 data*/
+//s16 dig_P5;/**<calibration P5 data*/
+//s16 dig_P6;/**<calibration P6 data*/
+//s16 dig_P7;/**<calibration P7 data*/
+//s16 dig_P8;/**<calibration P8 data*/
+//s16 dig_P9;/**<calibration P9 data*/
 
-u8	dig_H1;/**<calibration H1 data*/
-s16 dig_H2;/**<calibration H2 data*/
-u8	dig_H3;/**<calibration H3 data*/
-s16 dig_H4;/**<calibration H4 data*/
-s16 dig_H5;/**<calibration H5 data*/
-s8	dig_H6;/**<calibration H6 data*/
+//u8	dig_H1;/**<calibration H1 data*/
+//s16 dig_H2;/**<calibration H2 data*/
+//u8	dig_H3;/**<calibration H3 data*/
+//s16 dig_H4;/**<calibration H4 data*/
+//s16 dig_H5;/**<calibration H5 data*/
+//s8	dig_H6;/**<calibration H6 data*/
 
-s32 t_fine;/**<calibration T_FINE data*/
+//s32 t_fine;/**<calibration T_FINE data*/
 	
 // Returns temperature in DegC, resolution is 0.01 DegC. Output value of “5123” equals 51.23 DegC.
 // t_fine carries fine temperature as global value
-int32_t BME280_compensate_T_int32(int32_t adc_T)
+/*int32_t BME280_compensate_T_int32(int32_t adc_T)
 {
 	int32_t var1, var2, T;
 	var1 = ((((adc_T>>3) - ((int32_t)dig_T1<<1))) * ((int32_t)dig_T2)) >> 11;
@@ -76,11 +78,11 @@ int32_t BME280_compensate_T_int32(int32_t adc_T)
 	t_fine = var1 + var2;
 	T = (t_fine * 5 + 128) >> 8;
 	return T;
-}
+}*/
 
 // Returns pressure in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8 fractional bits).
 // Output value of “24674867” represents 24674867/256 = 96386.2 Pa = 963.862 hPa
-uint32_t BME280_compensate_P_int64(int32_t adc_P)
+/*uint32_t BME280_compensate_P_int64(int32_t adc_P)
 {
 	int64_t var1, var2, p;
 	var1 = ((int64_t)t_fine) - 128000;
@@ -96,11 +98,11 @@ uint32_t BME280_compensate_P_int64(int32_t adc_P)
 	var2 = (((int64_t)dig_P8) * p) >> 19;
 	p = ((p + var1 + var2) >> 8) + (((int64_t)dig_P7)<<4);
 	return (uint32_t)p;
-}
+}*/
 
 // Returns humidity in %RH as unsigned 32 bit integer in Q22.10 format (22 integer and 10 fractional bits).
 // Output value of “47445” represents 47445/1024 = 46.333 %RH
-uint32_t bme280_compensate_H_int32(int32_t adc_H)
+/*uint32_t bme280_compensate_H_int32(int32_t adc_H)
 {
 	int32_t v_x1_u32r;
 	v_x1_u32r = (t_fine - ((int32_t)76800));
@@ -112,26 +114,26 @@ uint32_t bme280_compensate_H_int32(int32_t adc_H)
 	v_x1_u32r = (v_x1_u32r < 0 ? 0 : v_x1_u32r);
 	v_x1_u32r = (v_x1_u32r > 419430400 ? 419430400 : v_x1_u32r);
 	return (uint32_t)(v_x1_u32r>>12);
-}
+}*/
 
-int _bme280_setByte(byte reg, byte data)
+/*int _bme280_setByte(byte reg, byte data)
 {
 		byte config[2];
 		config[0]=reg;
 		config[1]=data;
 		return !i2c_write(I2C_bme280,config,2);
-}
+}*/
 
-uint16_t _bme280_getReg(byte reg)
+/*uint16_t _bme280_getReg(byte reg)
 {
 		byte data;
 		i2c_write(I2C_bme280,&reg,1);	   // 書込みの実行
 		delay(1);
 		i2c_read(I2C_bme280,&data,1);	   // 読み出し
 		return (int)data;
-}
+}*/
 
-void _bme280_cal()
+/*void _bme280_cal()
 {
 	dig_T1 = (u16)(_bme280_getReg(0x88) + (_bme280_getReg(0x89)<<8));
 	dig_T2 = (s16)(_bme280_getReg(0x8A) + (_bme280_getReg(0x8B)<<8));
@@ -151,9 +153,9 @@ void _bme280_cal()
 	dig_H4 = (s16)((_bme280_getReg(0xE4)<<4) + (_bme280_getReg(0xE5)&0x0F));
 	dig_H5 = (s16)(((_bme280_getReg(0xE5)&0xF0)>>4) + (_bme280_getReg(0xE6)<<4));
 	dig_H6 = (s8)(_bme280_getReg(0xE7));
-}
+}*/
 
-float bme280_getTemp()
+/*float bme280_getTemp()
 {
 	int32_t in;
 	in = _bme280_getReg(0xFA);			  		// temp_msb[7:0]
@@ -163,10 +165,10 @@ float bme280_getTemp()
 	in |= _bme280_getReg(0xFC); 				// temp_xlsb[3:0]
 //	  printf("getTemp  %08X %d\n",in,in);
 	return ((float)BME280_compensate_T_int32(in))/100.;
-}
+}*/
 
 
-float bme280_getHum()
+/*float bme280_getHum()
 {
 	int32_t in;
 	in = _bme280_getReg(0xFD);			  		// hum_msb[7:0]
@@ -174,9 +176,9 @@ float bme280_getHum()
 	in |= _bme280_getReg(0xFE); 				// hum_lsb[7:0]
 //	printf("getHum   %08X\n",in);
 	return ((float)bme280_compensate_H_int32(in))/1024.;
-}
+}*/
 
-float bme280_getPress()
+/*float bme280_getPress()
 {
 	int32_t in;
 	in = _bme280_getReg(0xF7);					// press_msb[7:0]
@@ -186,9 +188,9 @@ float bme280_getPress()
 	in |= _bme280_getReg(0xF9);				// press_xlsb[3:0]
 //	printf("getPress %08X\n",in);
 	return ((float)BME280_compensate_P_int64(in))/25600.;
-}
+}*/
 
-int bme280_init()
+/*int bme280_init()
 {
 	byte reg,data,in;
 	int i;
@@ -242,9 +244,9 @@ int bme280_init()
 		return 31;
 	}
 	return 0;
-}
+}*/
 
-int bme280_stop()
+/*int bme280_stop()
 {
 	byte reg,data;
 	int ret;
@@ -253,18 +255,21 @@ int bme280_stop()
 	ret=_bme280_setByte(reg,data);	// 書込みの実行
     i2c_close();
 	return ret;
-}
+}*/
 
-void bme280_print(float temp, float hum, float press)
+/*void bme280_print(float temp, float hum, float press)
 {
 		printf("Temperature : %3.2f C",temp);
 		printf("Humidity : %3.2f \%",hum);
 		printf("Pressure : %4.2f\n hPa",press);
-}
+}*/
 
 
 int main(int argc,char **argv)
 {
+    BME280 sensor;
+    sensor.setBus("/dev/i2c-1");
+    sensor.init();
     //Read ConfigFile
     ConfigReader conf("Slowcontrol","Database");
     //conf.print();
@@ -272,27 +277,10 @@ int main(int argc,char **argv)
     Database database(conf.getParameters());
     database()->connect();
     ConfigReader opt("Slowcontrol","Options");
-    long time=opt.getParameter("Wait").Long();
-    
-	//mariadb::account_ref Myaccount= mariadb::account::create("10.42.0.120","sjturpc","RPC2018");
-	//mariadb::connection_ref Myconnection=mariadb::connection::create(Myaccount);
-
-    
-    if( argc == 2 ) I2C_bme280=(byte)strtol(argv[1],NULL,16);
-	if( I2C_bme280>=0x80 ) I2C_bme280>>=1;
-	if( argc < 1 || argc > 2 ){
-		fprintf(stderr,"usage: %s [I2C_bme280]\n",argv[0]);
-		return -1;
-	}
-	#ifdef DEBUG
-		printf("I2C_bme280 =0x%02X\n",I2C_bme280);
-	#endif
-
-	bme280_init();
-    
-     std::string string1 = "INSERT INTO ";
-     std::string string2 = database.getName()+"."+database.getTable();
-     std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
+    long time=opt.getParameter("Wait").Long();    
+    std::string string1 = "INSERT INTO ";
+    std::string string2 = database.getName()+"."+database.getTable();
+    std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
     std::cout<<std::setprecision(3)<<std::fixed;
 	while(1)
 	{
@@ -313,9 +301,10 @@ int main(int argc,char **argv)
         
         for(unsigned int i=0;i!=iter;++i)
         {
-            pressure.push_back(bme280_getPress());
-            humidity.push_back(bme280_getHum());
-            temperature.push_back(bme280_getTemp());
+            std::tuple<int32_t,uint32_t,uint32_t> results=sensor.getMeasures();
+            pressure.push_back(std::get<0>(results));
+            temperature.push_back(std::get<1>(results));
+            humidity.push_back(std::get<2>(results));
         }
 	
         double mean_pressure=0;
@@ -358,6 +347,6 @@ int main(int argc,char **argv)
 	else std::this_thread::sleep_for(std::chrono::microseconds(rest));
 	}
 	  database()->disconnect();
-	  bme280_stop();
+	  //bme280_stop();
 	return 0;
 }
