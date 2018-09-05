@@ -1,9 +1,9 @@
  {
     "Database":
     {
-        "User":"sjturpc",
-        "Password": "RPC2018",
-        "Host":"10.42.0.1",
+        "User":"",
+        "Password": "",
+        "Host":"",
         "Database" : "SJTUrpc",
         "Table" : "slowcontrol"
     },

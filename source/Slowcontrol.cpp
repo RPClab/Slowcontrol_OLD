@@ -6,8 +6,6 @@
 #include <thread>
 #include <set>
 #include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "soft_i2c.h"
 #include<vector>
@@ -15,6 +13,7 @@
 #include<string>
 #include<cstdlib>
 #include <chrono>
+#include <iomanip>
 
 typedef uint8_t byte; 
 uint8_t I2C_bme280=0x76;
@@ -22,6 +21,16 @@ uint8_t I2C_bme280=0x76;
 // #define DEBUG
 
 // BST-BME280-DS001-11 | Revision 1.2 | October 2015 Bosch Sensortec
+
+template<typename T>
+std::string to_stringN(const T& value, const int&n=3)
+{
+	std::ostringstream out;
+	out<<std::setprecision(n)<<std::fixed<<value;
+	return std::move(out.str());
+}
+
+
 
 /* singed integer type*/
 typedef	int8_t s8;/**< used for signed 8bit */
@@ -284,7 +293,7 @@ int main(int argc,char **argv)
      std::string string1 = "INSERT INTO ";
      std::string string2 = database.getName()+"."+database.getTable();
      std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
-    
+    std::cout<<std::setprecision(3)<<std::fixed;
 	while(1)
 	{
         std::chrono::high_resolution_clock::time_point t1=std::chrono::high_resolution_clock::now();
@@ -336,32 +345,13 @@ int main(int argc,char **argv)
         double std_pressure=std::sqrt(var_pressure/(iter-1));
         double std_humidity=std::sqrt(var_humidity/(iter-1));
         double std_temperature=std::sqrt(var_temperature/(iter-1));
-        
-        char press[20],std_press[20],temp[20],std_temp[20],humid[20],std_humid[20];
-        std::string strp,strsp,strt,strst,strh,strsh;
-        
-        gcvt(mean_pressure,6,press);
-        strp = press;
-        gcvt(std_pressure,5,std_press);
-        strsp = std_press;
-        
-        gcvt(mean_temperature,6,temp);
-        strt = temp;
-        gcvt(std_temperature,5,std_temp);
-        strst = std_temp;
-        
-        gcvt(mean_humidity,6,humid);
-        strh = humid;
-        gcvt(std_humidity,5,std_humid);
-        strsh = std_humid;
-        
        
-        std::string string4 = "VALUES (0,\""+tim.str()+"\","+strp+","+strsp+","+strt+","+strst+","+strh+","+strsh+")";
+        std::string string4 = "VALUES (0,\""+tim.str()+"\","+to_stringN(mean_pressure)+","+to_stringN(std_pressure)+","+to_stringN(mean_temperature)+","+to_stringN(std_temperature)+","+to_stringN(mean_humidity)+","+to_stringN(std_humidity)+")";
         
         std::string com= string1 + string2 + string3 + string4;
-       // std::cout<<com<<std::endl;
+        //std::cout<<com<<std::endl;
         database()->execute(com);
-        std::cout<<"Mean Pressure : "<<strp<<" ( Std : "<<strsp<<"), Mean Temperature : "<<strt<<" ( Std : "<<strst<<"), Mean Humidity : "<<strh<<" ( Std : "<<strsh<<")"<<std::endl;
+        std::cout<<tim.str()<<", Mean Pressure : "<<to_stringN(mean_pressure)<<" (Std : "<<to_stringN(std_pressure)<<"), Mean Temperature : "<<to_stringN(mean_temperature)<<" (Std : "<<to_stringN(std_temperature)<<"), Mean Humidity : "<<to_stringN(mean_humidity)<<" (Std : "<<to_stringN(std_humidity)<<")"<<std::endl;
         std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now();
         long rest=time*1000000-std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();
         if(rest<=0) std::this_thread::sleep_for(std::chrono::seconds(time));
