@@ -271,14 +271,15 @@ int main(int argc,char **argv)
     sensor.setBus("/dev/i2c-1");
     sensor.init();
     //Read ConfigFile
-    ConfigReader conf("Slowcontrol","Database");
+    //ConfigReader conf("Slowcontrol","Database");
     //conf.print();
     //Connect to Database
-    Database database(conf.getParameters());
+   /* Database database(conf.getParameters());
     database()->connect();
     ConfigReader opt("Slowcontrol","Options");
-    long time=opt.getParameter("Wait").Long();    
-    std::string string1 = "INSERT INTO ";
+    long time=opt.getParameter("Wait").Long();    */
+    sensor.stream_sensor_data_forced_mode();
+   /* std::string string1 = "INSERT INTO ";
     std::string string2 = database.getName()+"."+database.getTable();
     std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
     std::cout<<std::setprecision(3)<<std::fixed;
@@ -347,6 +348,6 @@ int main(int argc,char **argv)
 	else std::this_thread::sleep_for(std::chrono::microseconds(rest));
 	}
 	  database()->disconnect();
-	  //bme280_stop();
+	  //bme280_stop();*/
 	return 0;
 }

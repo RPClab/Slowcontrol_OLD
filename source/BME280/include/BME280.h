@@ -38,6 +38,31 @@ public:
     std::string getBus();
     void connect();
     std::tuple<int32_t,uint32_t,uint32_t> getMeasures();
+    int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
+{
+  struct bme280_data comp_data;
+
+  m_rslt = bme280_set_sensor_settings(m_settings_sel, dev);
+
+  printf("Temperature, Pressure, Humidity\r\n");
+  /* Continuously stream sensor data */
+  while (1) {
+    m_rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
+    /* Wait for the measurement to complete and print data @25Hz */
+    dev->delay_ms(40);
+    m_rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
+    print_sensor_data(&comp_data);
+  }
+  return rslt;
+}
+void print_sensor_data(struct bme280_data *comp_data)
+{
+#ifdef BME280_FLOAT_ENABLE
+  printf("temp %0.2f, p %0.2f, hum %0.2f\r\n",comp_data->temperature, comp_data->pressure, comp_data->humidity);
+#else
+  printf("temp %ld, p %ld, hum %ld\r\n",comp_data->temperature, comp_data->pressure, comp_data->humidity);
+#endif
+}
 private:
     bme280_dev m_dev;
     int8_t m_rslt;

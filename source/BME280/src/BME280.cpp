@@ -8,7 +8,14 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <cstring>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <fcntl.h>
 extern "C"
 {
     #include "bme280/bme280.h"
@@ -30,13 +37,13 @@ void BME280::user_delay_ms(uint32_t period)
     
 int8_t BME280::user_i2c_write(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
 {
-    int8_t *buf;
-    buf = static_cast<int8_t*>(malloc(len +1));
-    buf[0] = reg_addr;
-    memcpy(buf +1, data, len);
-    write(m_fd, buf, len +1);
-    free(buf);
-    return 0;
+  int8_t *buf;
+  buf = malloc(len +1);
+  buf[0] = reg_addr;
+  memcpy(buf +1, data, len);
+  write(fd, buf, len +1);
+  free(buf);
+  return 0;
 }
 
 void BME280::init()
