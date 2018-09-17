@@ -87,29 +87,50 @@ int main(int argc,char **argv)
 {
     struct bme280_dev dev;
     int8_t rslt = BME280_OK;
-    if ((fd = open("/dev/i2c-1", O_RDWR)) < 0) 
+    ConfigReader opt("Slowcontrol","Options");
+    long time=opt.getParameter("Wait").Long();
+    std::string device=opt.getParameter("Device").String();
+    std::string type=opt.getParameter("Type").String();
+    int adress=opt.getParameter("Adress").Int();
+    if ((fd = open(device.c_str(), O_RDWR)) < 0) 
     {
         printf("Failed to open the i2c bus %s", argv[1]);
         exit(1);
     }
-    if (ioctl(fd, I2C_SLAVE, 0x76) < 0) 
-    {
-        printf("Failed to acquire bus access and/or talk to slave.\n");
-        exit(1);
+    if(type=="I2C")
+    {	
+    	if (ioctl(fd, I2C_SLAVE, adress) < 0) 
+    	{
+        	printf("Failed to acquire bus access and/or talk to slave.\n");
+        	exit(1);
+    	}
+    	dev.dev_id = adress;
+    	dev.intf = BME280_I2C_INTF;
+    	dev.read = user_i2c_read;
+    	dev.write = user_i2c_write;
     }
-    dev.dev_id = BME280_I2C_ADDR_PRIM;
-    dev.intf = BME280_I2C_INTF;
-    dev.read = user_i2c_read;
-    dev.write = user_i2c_write;
+    else if(type=="SPI")
+    {
+	dev.dev_id=0;
+	dev.intf=BME280_SPI_INTF;
+	dev.read = user_i2c_read;
+    	dev.write = user_i2c_write;
+
+    }
+    else
+    {
+	std::cout<<type<<" unknown !"<<std::endl;
+	std::exit(1);
+    }
     dev.delay_ms = user_delay_ms;
     rslt = bme280_init(&dev);
+    rslt= bme280_soft_reset(&dev);
+    int ID=static_cast<int>(dev.chip_id);
     //Read ConfigFile
     ConfigReader conf("Slowcontrol","Database");
     //Connect to Database
     Database database(conf.getParameters());
     database()->connect();
-    ConfigReader opt("Slowcontrol","Options");
-    long time=opt.getParameter("Wait").Long();
     std::string string1 = "INSERT INTO ";
     std::string string2 = database.getName()+"."+database.getTable();
     std::string string3 = " (sensor,date,pressure,std_pressure,temperature,std_temperature,humidity,std_humidity) ";
@@ -135,7 +156,7 @@ int main(int argc,char **argv)
             bme280_data meas=stream_sensor_data_forced_mode(&dev);
             pressure.push_back(meas.pressure/10000.0);
             temperature.push_back(meas.temperature/100.0);
-            humidity.push_back(meas.humidity/1000.0);
+            humidity.push_back(meas.humidity/1024.0);
         }
 	
         double mean_pressure=0;
@@ -166,10 +187,10 @@ int main(int argc,char **argv)
         double std_humidity=std::sqrt(var_humidity/(iter-1));
         double std_temperature=std::sqrt(var_temperature/(iter-1));
        
-        std::string string4 = "VALUES (0,\""+tim.str()+"\","+to_stringN(mean_pressure)+","+to_stringN(std_pressure)+","+to_stringN(mean_temperature)+","+to_stringN(std_temperature)+","+to_stringN(mean_humidity)+","+to_stringN(std_humidity)+")";
+        std::string string4 = "VALUES ("+std::to_string(ID)+",\""+tim.str()+"\","+to_stringN(mean_pressure)+","+to_stringN(std_pressure)+","+to_stringN(mean_temperature)+","+to_stringN(std_temperature)+","+to_stringN(mean_humidity)+","+to_stringN(std_humidity)+")";
         
         std::string com= string1 + string2 + string3 + string4;
-        database()->execute(com);
+       	database()->execute(com);
         std::cout<<tim.str()<<", Mean Pressure : "<<to_stringN(mean_pressure)<<" (Std : "<<to_stringN(std_pressure)<<"), Mean Temperature : "<<to_stringN(mean_temperature)<<" (Std : "<<to_stringN(std_temperature)<<"), Mean Humidity : "<<to_stringN(mean_humidity)<<" (Std : "<<to_stringN(std_humidity)<<")"<<std::endl;
         std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now();
         long rest=time*1000000-std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();

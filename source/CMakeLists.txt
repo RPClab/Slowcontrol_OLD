@@ -11,7 +11,6 @@ file(GLOB CONFIGREADER_SRC src/*.cpp)
 add_library( ConfigReader STATIC ${CONFIGREADER_SRC})
 link_libraries(ConfigReader bme280 jsoncpp pthread)
 
-
 include_directories(${MariaDBClient_INCLUDE_DIRS})
 add_executable(Slowcontrol Slowcontrol.cpp)
 #target_link_libraries(Slowcontrol BME280pp ${MariaDBClient_LIBRARIES} pthread mariadbclientpp I2C)
