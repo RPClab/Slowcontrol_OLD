@@ -30,7 +30,7 @@ set_if_not( jsoncpp_repository "https://github.com/RPClab/jsoncpp" )
 set_if_not( jsoncpp_version "master" )
 set_if_not( mariadbpp_repository "https://github.com/RPClab/mariadbpp" )
 set_if_not( mariadbpp_version "master" )
-set_if_not( BME280_repository "https://github.com/RPClab/BME280_driver.git" )
+set_if_not( BME280_repository "https://github.com/RPClab/BME280_Driver_cpp.git" )
 set_if_not( BME280_version "master" )
 
 include(ExternalProject)

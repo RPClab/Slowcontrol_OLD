@@ -6,22 +6,14 @@
 #include <thread>
 #include <set>
 #include <fstream>
-#include <string.h>
 #include<vector>
 #include<cmath>
 #include<string>
 #include<cstdlib>
 #include <iomanip>
-#include "bme280/bme280.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <fcntl.h>
-
+#include "bme280/bme280.hpp"
+#include "bme280/I2C.hpp"
+#include "bme280/data.hpp"
 template<typename T>
 std::string to_stringN(const T& value, const int&n=3)
 {
@@ -30,102 +22,147 @@ std::string to_stringN(const T& value, const int&n=3)
 	return std::move(out.str());
 }
 
-int fd;
-
-int8_t user_i2c_read(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
+class bme_i2c
 {
-  write(fd, &reg_addr,1);
-  read(fd, data, len);
-  return 0;
-}
+public:
+    bme_i2c():m_i2c("/dev/i2c-1","0x76"),m_bme280(m_i2c,m_setting)
+    {
 
-void user_delay_ms(uint32_t period)
-{
-  usleep(period*1000);
-}
-
-int8_t user_i2c_write(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
-{
-  int8_t *buf;
-  buf = (int8_t*)malloc(len +1);
-  buf[0] = reg_addr;
-  memcpy(buf +1, data, len);
-  write(fd, buf, len +1);
-  free(buf);
-  return 0;
-}
-
-void print_sensor_data(struct bme280_data *comp_data)
-{
-#ifdef BME280_FLOAT_ENABLE
-  printf("temp %0.2f, p %0.2f, hum %0.2f\r\n",comp_data->temperature, comp_data->pressure, comp_data->humidity);
-#else
-  printf("temp %ld, p %ld, hum %ld\r\n",comp_data->temperature, comp_data->pressure, comp_data->humidity);
-#endif
-}
-
-bme280_data stream_sensor_data_forced_mode(struct bme280_dev *dev)
-{
-  int8_t rslt;
-  uint8_t settings_sel;
-  struct bme280_data comp_data;
-  /* Recommended mode of operation: Indoor navigation */
-  dev->settings.osr_h = BME280_OVERSAMPLING_1X;
-  dev->settings.osr_p = BME280_OVERSAMPLING_16X;
-  dev->settings.osr_t = BME280_OVERSAMPLING_2X;
-  dev->settings.filter = BME280_FILTER_COEFF_16;
-  settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
-  rslt = bme280_set_sensor_settings(settings_sel, dev);
-  rslt = bme280_set_sensor_mode(BME280_FORCED_MODE, dev);
-  /* Wait for the measurement to complete and print data @25Hz */
-  dev->delay_ms(40);
-  rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
-  return comp_data;
-}
+    }
+    void setIterations(const unsigned int& i)
+    {
+        iter=i;
+    }
+    void reload()
+    {
+        m_bme280=bme280(m_i2c,m_setting);
+        temperature.reserve(iter);
+        pressure.reserve(iter);
+        humidity.reserve(iter);
+    }
+    void setI2C(const std::string& path,const std::string& adress)
+    {
+        m_i2c=I2C(path,adress);
+        
+    }
+    void setSetting(const std::string& P,const std::string& H, const std::string& T,const std::string& F)
+    {
+        m_setting.setOversamplingPressure(P);
+        m_setting.setOversamplingHumidity(H);
+        m_setting.setOversamplingTemperature(T);
+        m_setting.setFilterCoefficient(F);
+    }
+    void setNbrIteration(const unsigned int& i)
+    {
+        
+    }
+    void stream_sensor_data_forced_mode()
+    {
+        int8_t rslt;
+        uint8_t settings_sel;
+        settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
+        rslt = m_bme280.bme280_set_sensor_settings(settings_sel);
+        rslt = m_bme280.bme280_set_sensor_mode(BME280_FORCED_MODE);
+        /* Wait for the measurement to complete and print data @25Hz */
+        m_bme280.delay_ms(40);
+        rslt = m_bme280.bme280_get_sensor_data(BME280_ALL);
+        data dat=m_bme280.getData();
+        temperature.push_back(dat.getTemperature()/100.0);
+        pressure.push_back(dat.getPressure()/10000.0);
+        humidity.push_back(dat.getHumidity()/1024.0);
+    }
+    void Calculations()
+    {
+        for(unsigned int i=0;i!=temperature.size();++i)
+        {
+            mean_pressure+=pressure[i];
+            mean_temperature+=temperature[i];
+            mean_humidity+=humidity[i];
+        }
+        mean_temperature/=iter;
+        mean_pressure/=iter;
+        mean_humidity/=iter;
+        for(unsigned int i=0;i!=temperature.size();++i)
+        {
+            var_temperature=(temperature[i]-mean_temperature)*(temperature[i]-mean_temperature);
+            var_pressure   =(pressure[i]-mean_pressure)*(pressure[i]-mean_pressure);
+            var_humidity   =(humidity[i]-mean_humidity)*(humidity[i]-mean_humidity);
+        }
+        var_pressure=std::sqrt(var_pressure/(iter-1));
+        var_humidity=std::sqrt(var_humidity/(iter-1));
+        var_temperature=std::sqrt(var_temperature/(iter-1));
+    }
+    double getMeanTemperature()
+    {
+        return mean_temperature;
+    }
+    double getMeanPressure()
+    {
+        return mean_pressure;
+    }
+    double getMeanHumidity()
+    {
+        return mean_humidity;
+    }
+    double getStdTemperature()
+    {
+        return var_temperature;
+    }
+    double getStdPressure()
+    {
+        return var_pressure;
+    }
+    double getStdHumidity()
+    {
+        return var_humidity;
+    }
+    void init()
+    {
+        m_i2c.connect();
+        m_bme280.bme280_init();
+    }
+    void setID(const int& i)
+    {
+        m_id=i;
+    }
+    int getID()
+    {
+        return m_id;
+    }
+private:
+    I2C m_i2c;
+    settings m_setting;
+    bme280 m_bme280;
+    std::vector<double> temperature;
+    std::vector<double> pressure;
+    std::vector<double> humidity;
+    double mean_pressure=0;
+    double mean_temperature=0;
+    double mean_humidity=0;
+    double var_temperature=0;
+    double var_pressure=0;
+    double var_humidity=0;
+    unsigned int iter{50};
+    int m_id{0};
+};
 
 int main(int argc,char **argv)
 {
-    struct bme280_dev dev;
-    int8_t rslt = BME280_OK;
-    ConfigReader opt("Slowcontrol","Options");
+    std::vector<bme_i2c> bme;
+    ConfigReader opt("Slowcontrol","CommonOptions");
     long time=opt.getParameter("Wait").Long();
-    std::string device=opt.getParameter("Device").String();
-    std::string type=opt.getParameter("Type").String();
-    int adress=opt.getParameter("Adress").Int();
-    if ((fd = open(device.c_str(), O_RDWR)) < 0) 
+    unsigned int iterations=opt.getParameter("NbrIterations").UInt();
+    for(unsigned int i=0;i!=opt.getParameter("NbrSensor").UInt();++i)
     {
-        printf("Failed to open the i2c bus %s", argv[1]);
-        exit(1);
+        ConfigReader op("Slowcontrol","Sensor"+std::to_string(i+1));
+        bme.push_back(bme_i2c());
+        bme[i].setI2C(opt.getParameter("Device").String(),opt.getParameter("Adress").String());
+        bme[i].setSetting(opt.getParameter("OversamplingPressure").String(),opt.getParameter("OversamplingHumidity").String(),opt.getParameter("OversamplingTemperature").String(),opt.getParameter("FilterCoefficient").String());
+        bme[i].setID(opt.getParameter("ID").Int());
+        bme[i].setNbrIteration(iterations);
+        bme[i].reload();
+        bme[i].init();
     }
-    if(type=="I2C")
-    {	
-    	if (ioctl(fd, I2C_SLAVE, adress) < 0) 
-    	{
-        	printf("Failed to acquire bus access and/or talk to slave.\n");
-        	exit(1);
-    	}
-    	dev.dev_id = adress;
-    	dev.intf = BME280_I2C_INTF;
-    	dev.read = user_i2c_read;
-    	dev.write = user_i2c_write;
-    }
-    else if(type=="SPI")
-    {
-	dev.dev_id=0;
-	dev.intf=BME280_SPI_INTF;
-	dev.read = user_i2c_read;
-    	dev.write = user_i2c_write;
-
-    }
-    else
-    {
-	std::cout<<type<<" unknown !"<<std::endl;
-	std::exit(1);
-    }
-    dev.delay_ms = user_delay_ms;
-    rslt = bme280_init(&dev);
-    rslt= bme280_soft_reset(&dev);
-    int ID=static_cast<int>(dev.chip_id);
     //Read ConfigFile
     ConfigReader conf("Slowcontrol","Database");
     //Connect to Database
@@ -139,63 +176,26 @@ int main(int argc,char **argv)
         std::chrono::high_resolution_clock::time_point t1=std::chrono::high_resolution_clock::now();
 		std::time_t ti = ::time(nullptr);
 		mariadb::date_time tim(ti);
-        
-        int iter=50;
-        
-        std::vector<double>pressure;
-        pressure.reserve(iter);
-        
-	    std::vector<double>temperature;
-	    temperature.reserve(iter);
-        
-        std::vector<double>humidity;
-        humidity.reserve(iter);
-        
-        for(unsigned int i=0;i!=iter;++i)
+        for(unsigned int i=0;i!=iterations;++i)
         {
-            bme280_data meas=stream_sensor_data_forced_mode(&dev);
-            pressure.push_back(meas.pressure/10000.0);
-            temperature.push_back(meas.temperature/100.0);
-            humidity.push_back(meas.humidity/1024.0);
+            for(unsigned int j=0;j!=bme.size();++j)
+            {
+                bme[j].stream_sensor_data_forced_mode();
+            }
         }
-	
-        double mean_pressure=0;
-        double mean_temperature=0;
-        double mean_humidity=0;
-	
-        for(unsigned int i=0;i!=temperature.size();++i)
+        for(unsigned int j=0;j!=bme.size();++j)
         {
-            mean_pressure+=pressure[i];
-            mean_temperature+=temperature[i];
-            mean_humidity+=humidity[i];
+            bme[j].Calculations();
+            std::string string4 = "VALUES ("+std::to_string(bme[j].getID())+",\""+tim.str()+"\","+to_stringN(bme[j].getMeanPressure())+","+to_stringN(bme[j].getStdPressure())+","+to_stringN(bme[j].getMeanTemperature())+","+to_stringN(bme[j].getStdTemperature())+","+to_stringN(bme[j].getMeanHumidity())+","+to_stringN(bme[j].getStdHumidity())+")";
+            std::string com= string1 + string2 + string3 + string4;
+            database()->execute(com);
+            std::cout<<bme[j].getID()<<"  "<<tim.str()<<", Mean Pressure : "<<to_stringN(bme[j].getMeanPressure())<<" (Std : "<<to_stringN(bme[j].getStdPressure())<<"), Mean Temperature : "<<to_stringN(bme[j].getMeanTemperature())<<" (Std : "<<to_stringN(bme[j].getStdTemperature())<<"), Mean Humidity : "<<to_stringN(bme[j].getMeanHumidity())<<" (Std : "<<to_stringN(bme[j].getStdHumidity())<<")"<<std::endl;
         }
-        mean_temperature/=iter;
-        mean_pressure/=iter;
-        mean_humidity/=iter;
-	
-        double var_temperature=0;
-        double var_pressure=0;
-        double var_humidity=0;
-	
-        for(unsigned int i=0;i!=temperature.size();++i)
-        {
-            var_temperature=(temperature[i]-mean_temperature)*(temperature[i]-mean_temperature);
-            var_pressure   =(pressure[i]-mean_pressure)*(pressure[i]-mean_pressure);
-            var_humidity   =(humidity[i]-mean_humidity)*(humidity[i]-mean_humidity);
-        }
-        double std_pressure=std::sqrt(var_pressure/(iter-1));
-        double std_humidity=std::sqrt(var_humidity/(iter-1));
-        double std_temperature=std::sqrt(var_temperature/(iter-1));
-       
-        std::string string4 = "VALUES ("+std::to_string(ID)+",\""+tim.str()+"\","+to_stringN(mean_pressure)+","+to_stringN(std_pressure)+","+to_stringN(mean_temperature)+","+to_stringN(std_temperature)+","+to_stringN(mean_humidity)+","+to_stringN(std_humidity)+")";
         
-        std::string com= string1 + string2 + string3 + string4;
-       	database()->execute(com);
-        std::cout<<tim.str()<<", Mean Pressure : "<<to_stringN(mean_pressure)<<" (Std : "<<to_stringN(std_pressure)<<"), Mean Temperature : "<<to_stringN(mean_temperature)<<" (Std : "<<to_stringN(std_temperature)<<"), Mean Humidity : "<<to_stringN(mean_humidity)<<" (Std : "<<to_stringN(std_humidity)<<")"<<std::endl;
         std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now();
         long rest=time*1000000-std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();
         if(rest<=0) std::this_thread::sleep_for(std::chrono::seconds(time));
-	else std::this_thread::sleep_for(std::chrono::microseconds(rest));
+        else std::this_thread::sleep_for(std::chrono::microseconds(rest));
 	}
 	database()->disconnect();
 	return 0;

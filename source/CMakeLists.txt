@@ -3,7 +3,6 @@
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/)
 include_directories(include)
 include_directories(${PROJECT_SOURCE_DIR}/bin/include)
-include_directories(${PROJECT_SOURCE_DIR}/source/BME280/include)
 link_directories(${PROJECT_SOURCE_DIR}/bin/lib)
 
 ## Sources
