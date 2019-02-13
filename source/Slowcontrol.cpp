@@ -21,10 +21,10 @@ std::string to_stringN(const T& value, const int&n=3)
 }
 
 
-class sensor
+class Val
 {
 public:
-    sensor(const std::string& dev,const std::string& adress,settings& set,const int& iter,const int& id,const std::string name):m_i2c(I2C(dev,adress)),m_bme280(m_i2c,set),m_iter(iter),m_id(id),m_name(name)
+    Val(const int& iter,const int& id,const std::string name):m_iter(iter),m_id(id),m_name(name)
     {
         pressure.reserve(m_iter);
         temperature.reserve(m_iter);
@@ -105,14 +105,8 @@ public:
     {
         return std_humidity;
     }
-    void init()
+    void readData(const data& dat)
     {
-        m_i2c.connect();
-        m_bme280.init();
-    }
-    void readData()
-    {
-        data dat=m_bme280.getDataForcedMode();
         pressure.push_back(dat.getPressure());
         temperature.push_back(dat.getTemperature());
         humidity.push_back(dat.getHumidity());
@@ -121,9 +115,7 @@ public:
 private:
     std::string m_name{""};
     int m_id{0};
-    I2C m_i2c;
     int m_iter{0};
-    bme280 m_bme280;
     std::vector<double>pressure;
     std::vector<double>temperature;
     std::vector<double>humidity;
@@ -138,7 +130,9 @@ private:
 int main(int argc,char **argv)
 {
     settings setting;
-    std::vector<sensor> sensors;
+    std::vector<Val> Vals;
+    std::vector<I2C> i2cs;
+    std::vector<bme280> bme280s;
     //Read Global Options :
     ConfigReader opt("Slowcontrol","GlobalOptions");
     setting.setOversamplingPressure(opt.getParameter("OversamplingPressure").String());
@@ -152,8 +146,11 @@ int main(int argc,char **argv)
     for(std::size_t sen=0;sen!=NbrSensors;++sen)
     {
         ConfigReader opt("Slowcontrol","Sensor_"+std::to_string(sen+1));
-        sensors.emplace_back(opt.getParameter("Device").String(),opt.getParameter("Adress").String(),setting,iteration,opt.getParameter("ID").Int(),opt.getParameter("Name").String());
-        sensors[sen].init();
+        i2cs.emplace_back(opt.getParameter("Device").String(),opt.getParameter("Adress").String());
+        i2cs[sen].connect();
+        bme280s.emplace_back(i2cs[sen],setting);
+        bme280s[sen].init();
+        Vals.emplace_back(iteration,opt.getParameter("ID").Int(),opt.getParameter("Name").String());
     }
     //Read Database Options :
     ConfigReader conf("Slowcontrol","Database");
@@ -172,18 +169,18 @@ int main(int argc,char **argv)
         {
             for(unsigned int j=0;j!=NbrSensors;++j)
             {
-                sensors[j].readData();
+                Vals[j].readData(bme280s[j].getDataForcedMode());
             }
         }
         for(unsigned int j=0;j!=NbrSensors;++j)
         {
-            sensors[j].CalculateMeans();
-            sensors[j].CalculateStd();
-            std::string string4 = "VALUES ("+std::to_string(sensors[j].getID())+",\""+tim.str()+"\","+to_stringN(sensors[j].MeanPressure())+","+to_stringN(sensors[j].StdPressure())+","+to_stringN(sensors[j].MeanTemperature())+","+to_stringN(sensors[j].StdTemperature())+","+to_stringN(sensors[j].MeanHumidity())+","+to_stringN(sensors[j].StdHumidity())+")";
+            Vals[j].CalculateMeans();
+            Vals[j].CalculateStd();
+            std::string string4 = "VALUES ("+std::to_string(Vals[j].getID())+",\""+tim.str()+"\","+to_stringN(Vals[j].MeanPressure())+","+to_stringN(Vals[j].StdPressure())+","+to_stringN(Vals[j].MeanTemperature())+","+to_stringN(Vals[j].StdTemperature())+","+to_stringN(Vals[j].MeanHumidity())+","+to_stringN(Vals[j].StdHumidity())+")";
             std::string com= string1 + string2 + string3 + string4;
             database()->execute(com);
-            std::cout<<"Sensor : "<<sensors[j].getName()<<", ID : "<<sensors[j].getID()<<", Time : "<<tim.str()<<", Mean Pressure : "<<to_stringN(sensors[j].MeanPressure())<<" (Std : "<<to_stringN(sensors[j].StdPressure())<<"), Mean Temperature : "<<to_stringN(sensors[j].MeanTemperature())<<" (Std : "<<to_stringN(sensors[j].StdTemperature())<<"), Mean Humidity : "<<to_stringN(sensors[j].MeanHumidity())<<" (Std : "<<to_stringN(sensors[j].StdHumidity())<<")"<<std::endl;
-            sensors[j].resetValues();
+            std::cout<<"Sensor : "<<Vals[j].getName()<<", ID : "<<Vals[j].getID()<<", Time : "<<tim.str()<<", Mean Pressure : "<<to_stringN(Vals[j].MeanPressure())<<" (Std : "<<to_stringN(Vals[j].StdPressure())<<"), Mean Temperature : "<<to_stringN(Vals[j].MeanTemperature())<<" (Std : "<<to_stringN(Vals[j].StdTemperature())<<"), Mean Humidity : "<<to_stringN(Vals[j].MeanHumidity())<<" (Std : "<<to_stringN(Vals[j].StdHumidity())<<")"<<std::endl;
+            Vals[j].resetValues();
         }
         std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now();
         long rest=time*1000000-std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count();
