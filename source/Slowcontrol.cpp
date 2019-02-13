@@ -26,9 +26,6 @@ class Val
 public:
     Val(const int& iter,const int& id,const std::string name):m_iter(iter),m_id(id),m_name(name)
     {
-        pressure.reserve(m_iter);
-        temperature.reserve(m_iter);
-        humidity.reserve(m_iter);
     }
     void resetValues()
     {
@@ -146,6 +143,7 @@ int main(int argc,char **argv)
     for(std::size_t sen=0;sen!=NbrSensors;++sen)
     {
         ConfigReader opt("Slowcontrol","Sensor_"+std::to_string(sen+1));
+        std::cout<<opt.getParameter("Device").String()<<" "<<opt.getParameter("Adress").String()<<std::endl;
         i2cs.emplace_back(opt.getParameter("Device").String(),opt.getParameter("Adress").String());
         i2cs[sen].connect();
         bme280s.emplace_back(i2cs[sen],setting);
@@ -169,7 +167,8 @@ int main(int argc,char **argv)
         {
             for(unsigned int j=0;j!=NbrSensors;++j)
             {
-                Vals[j].readData(bme280s[j].getDataForcedMode());
+                data dat=bme280s[j].getDataForcedMode();
+                Vals[j].readData(dat);
             }
         }
         for(unsigned int j=0;j!=NbrSensors;++j)
