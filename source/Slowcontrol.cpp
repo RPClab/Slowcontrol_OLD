@@ -159,11 +159,13 @@ int main(int argc,char **argv)
         bme280s[sen].init();
         Vals.emplace_back(iteration,opt.getParameter("ID").Int(),opt.getParameter("Name").String());
     }
-    
+    for(std::size_t sen=0;sen!=NbrSensors;++sen)
+    {
             for(unsigned int j=0;j!=100;++j)
         {
             print_sensor_data(bme280s[sen].getDataForcedMode());
         }
+    }
     //Read Database Options :
     ConfigReader conf("Slowcontrol","Database");
     //Connect to Database
