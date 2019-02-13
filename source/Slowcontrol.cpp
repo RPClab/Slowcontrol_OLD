@@ -158,7 +158,10 @@ int main(int argc,char **argv)
         bme280s.emplace_back(i2cs[sen],setting);
         bme280s[sen].init();
         Vals.emplace_back(iteration,opt.getParameter("ID").Int(),opt.getParameter("Name").String());
-        print_sensor_data(bme280s[sen].getDataForcedMode());
+        for(unsigned int j=0;j!=100;++j)
+        {
+            print_sensor_data(bme280s[sen].getDataForcedMode());
+        }
     }
     //Read Database Options :
     ConfigReader conf("Slowcontrol","Database");
