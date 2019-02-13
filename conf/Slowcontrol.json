@@ -7,12 +7,31 @@
         "Database" : "SJTUrpc",
         "Table" : "slowcontrol"
     },
-    "Options":
+    "GlobalOptions":
     {
-	"Wait":"60",
-	"Device":"/dev/i2c-1",
-	"Type":"I2C",
-	"Adress":"0x76"
+        "NbrSensors":"2",
+        "OversamplingPressure":"16X",
+        "OversamplingHumidity":"1X",
+        "OversamplingTemperature":"2X",
+        "FilterCoefficient":"16",
+        "Wait":"60",
+        "Iteration":"50"
+    },
+    "Sensor_1":
+    {
+        "Device":"/dev/i2c-1",
+        "Type":"I2C",
+        "Adress":"0x76",
+        "ID":"1",
+        "Name":"Gas",
+    },
+    "Sensor_2":
+    {
+        "Device":"/dev/i2c-1",
+        "Type":"I2C",
+        "Adress":"0x76",
+        "ID":"2",
+        "Name":"Lab",
     }
 }
 
