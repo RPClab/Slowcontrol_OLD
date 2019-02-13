@@ -21,6 +21,15 @@ std::string to_stringN(const T& value, const int&n=3)
 }
 
 
+void print_sensor_data(const data& dat)
+{
+#ifdef BME280_FLOAT_ENABLE
+  printf("temp %0.2f, p %0.2f, hum %0.2f\r\n",dat.getTemperature(), dat.getPressure(), dat.getHumidity());
+#else
+  printf("temp %ld, p %ld, hum %ld\r\n",dat.getTemperature(),dat.getPressure(),dat.getHumidity());
+#endif
+}
+
 class Val
 {
 public:
@@ -149,6 +158,7 @@ int main(int argc,char **argv)
         bme280s.emplace_back(i2cs[sen],setting);
         bme280s[sen].init();
         Vals.emplace_back(iteration,opt.getParameter("ID").Int(),opt.getParameter("Name").String());
+        print_sensor_data(bme280s[sen].getDataForcedMode());
     }
     //Read Database Options :
     ConfigReader conf("Slowcontrol","Database");
