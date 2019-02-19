@@ -22,12 +22,11 @@ public:
         // The format for Gross Weight : ww000.000kg or ww000.000lb
         // The format for Net Weight : wn000.000kg or wn000.000lb
         // So :
-        if(arg.size()!=11) return;
-        if(arg[1]!='w'||arg[1]!='n') return;
-        else if(arg[1]=='n')  m_isNet=true;
-        std::string weight = arg.substr(2,6);
-        std::string unit = arg.substr(9);
-        std::cout<<weight<<"  "<<unit<<std::endl;
+        if(arg.size()!=13) return;        
+	if(arg[1]!='w'&&arg[1]!='n') return;
+   	else if(arg[1]=='n')  m_isNet=true;
+        m_value=arg.substr(2,6);
+        if(arg.substr(9,2)=="lb") convert();
     }
     Value getWeight()
     {
@@ -70,8 +69,9 @@ std::string exec(const char* cmd) {
 std::string checklastentry(const std::string& name, Database& dat)
 {
     std::string query = "SELECT * FROM "+dat.getName()+"."+dat.getTable()+" WHERE date=(SELECT MAX(date) FROM "+dat.getName()+"."+dat.getTable()+" WHERE gas=\""+name+"\") AND gas=\""+name+"\";";
-    std::cout<<query<<std::endl;
+    //std::cout<<query<<std::endl;
     mariadb::result_set_ref result = dat()->query(query);
+    std::cout<<"Result"<<result->row_count()<<std::endl;
     if(result->row_count()==0) return "";
     else
     {
@@ -135,17 +135,17 @@ int main()
             while(wei.isGood());
         }
     }
-   while(1)
+   /*while(1)
    {
 
 	for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
     	{
-            std::cout<<"****"<<checklastentry(it->first,database)<<"***"<<std::endl;
+            //std::cout<<"****"<<checklastentry(it->first,database)<<"***"<<std::endl;
        		std::string buffer;
        		it->second.read(buffer,13);
-       		std::cout<<it->first<<" : "<<buffer<<std::endl;
+       		//std::cout<<it->first<<" : "<<buffer<<std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-   }
+   }*/
 }
