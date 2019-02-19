@@ -1,0 +1,19 @@
+ {
+    "Database":
+    {
+        "User":"sjturpc",
+        "Password": "RPC2018",
+        "Host":"10.42.0.1",
+        "Database" : "SJTUrpc",
+        "Table" : "weight"
+    },
+    "Options":
+    {
+	"Wait":"60",
+	"Device":"/dev/i2c-1",
+	"Type":"I2C",
+	"Adress":"0x76"
+    }
+}
+
+
