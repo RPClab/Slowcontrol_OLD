@@ -135,7 +135,7 @@ int main()
                 wei.parse(buffer);
             }
             while(wei.isGood()==true);
-            std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,weight,net_weight,new_bottle) VALUES (")+ti+","+it->first+","+std::to_string(wei.getWeight().Double())+","+wei.isNet()+",TRUE"+std::string(");");
+            std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,weight,net_weight,new_bottle) VALUES (")+tim.str()+","+it->first+","+std::to_string(wei.getWeight().Double())+","+(wei.isNet() ? std::string("TRUE") : std::string("FALSE"))+",TRUE"+std::string(");");
             std::cout<<command<<std::endl;
         }
     }
