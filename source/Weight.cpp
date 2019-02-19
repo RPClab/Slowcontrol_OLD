@@ -25,8 +25,17 @@ public:
         if(arg.size()!=13) return;        
 	if(arg[1]!='w'&&arg[1]!='n') return;
    	else if(arg[1]=='n')  m_isNet=true;
-        m_value=arg.substr(2,6);
+        m_value=arg.substr(2,7);
         if(arg.substr(9,2)=="lb") convert();
+	try
+	{
+		m_value.Double();
+		m_isgood=true;
+	}
+        catch(...)
+        {
+        }
+	std::cout<<arg<<"***"<<m_value<<std::endl;
     }
     Value getWeight()
     {
@@ -134,7 +143,7 @@ int main()
                 it->second.read(buffer,13);
                 wei.parse(buffer);
             }
-            while(wei.isGood()==true);
+            while(wei.isGood()==false);
             std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,weight,net_weight,new_bottle) VALUES (")+tim.str()+","+it->first+","+std::to_string(wei.getWeight().Double())+","+(wei.isNet() ? std::string("TRUE") : std::string("FALSE"))+",TRUE"+std::string(");");
             std::cout<<command<<std::endl;
         }
