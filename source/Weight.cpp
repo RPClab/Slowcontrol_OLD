@@ -121,6 +121,8 @@ int main()
         else std::cout << " No." << std::endl;
     }
     ////// Effet de bords : Check if at list one entry exist for gas name in database else add one and say it,s new bottle !!!
+    std::time_t ti= ::time(nullptr);
+    mariadb::date_time tim(ti);
     for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
     {
         if(checklastentry(it->first,database)=="")
@@ -132,7 +134,9 @@ int main()
                 it->second.read(buffer,13);
                 wei.parse(buffer);
             }
-            while(wei.isGood());
+            while(wei.isGood()==true);
+            std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,weight,net_weight,new_bottle) VALUES (")+ti+","+it->first+","+std::to_string(wei.getWeight().Double())+","+wei.isNet()+",TRUE"+std::string(");");
+            std::cout<<command<<std::endl;
         }
     }
    /*while(1)
