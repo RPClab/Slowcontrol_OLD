@@ -13,6 +13,47 @@
 #include <string>
 #include <array>
 
+
+class weight
+{
+public:
+    void parse(const std::string arg)
+    {
+        // The format for Gross Weight : ww000.000kg or ww000.000lb
+        // The format for Net Weight : wn000.000kg or wn000.000lb
+        // So :
+        if(arg.size()!=11) return;
+        if(arg[1]!='w'||arg[1]!='n') return;
+        else if(arg[1]=='n')  m_isNet=true;
+        std::string weight = arg.substr(2,6);
+        std::string unit = arg.substr(9);
+        std::cout<<weight<<"  "<<unit<<std::endl;
+    }
+    Value getWeight()
+    {
+        return m_value;
+    }
+    bool isNet()
+    {
+        return m_isNet;
+    }
+    bool isGood()
+    {
+        return m_isgood;
+    }
+private:
+    void convert()
+    {
+        m_value=m_value.Double()*m_lbTOkg;
+    }
+    Value m_value{""};
+    bool m_isNet{false};
+    // Always put kg even is balance is in lb;
+    constexpr static double m_lbTOkg{0.45359237};
+    bool m_isgood{false};
+};
+
+
 std::string exec(const char* cmd) {
     std::array<char,5000> buffer;
     std::string result;
@@ -78,13 +119,28 @@ int main()
         }
         else std::cout << " No." << std::endl;
     }
+    ////// Effet de bords : Check if at list one entry exist for gas name in database else add one and say it,s new bottle !!!
+    for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
+    {
+        if(checklastentry(it->first,database)=="")
+        {
+            weight wei;
+            do
+            {
+                std::string buffer;
+                it->second.read(buffer,13);
+                wei.parse(buffer);
+            }
+            while(wei.isGood());
+        }
+    }
    while(1)
    {
 
 	for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
-    	{
-            std::cout<<"****"<<checklastentry(usbtobottle[it->first],database)<<"***"<<std::endl;
-       		std::string buffer;
+    {
+            std::cout<<"****"<<checklastentry(it->first,database)<<"***"<<std::endl;
+            std::string buffer;
        		it->second.read(buffer,13);
        		std::cout<<it->first<<" : "<<buffer<<std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
