@@ -146,19 +146,21 @@ int main()
             while(wei.isGood()==false);
             std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,weight,net_weight,new_bottle) VALUES (")+tim.str()+","+it->first+","+std::to_string(wei.getWeight().Double())+","+(wei.isNet() ? std::string("TRUE") : std::string("FALSE"))+",TRUE"+std::string(");");
             std::cout<<command<<std::endl;
+            database()->execute(command);
+            
         }
     }
-   /*while(1)
+   while(1)
    {
 
 	for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
-    	{
-            //std::cout<<"****"<<checklastentry(it->first,database)<<"***"<<std::endl;
+    {
+            std::cout<<checklastentry(it->first,database)<<"***"<<std::endl;
        		std::string buffer;
        		it->second.read(buffer,13);
        		//std::cout<<it->first<<" : "<<buffer<<std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-	std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-   }*/
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+   }
 }
