@@ -28,7 +28,8 @@ std::string exec(const char* cmd) {
 
 std::string checklastentry(const std::string& name, Database& dat)
 {
-    std::string query = "SELECT * FROM "+dat.getName()+"."+dat.getTable()+" WHERE date=(SELECT MAX(date) FROM "+dat.getName()+"."+dat.getTable()+" WHERE gas="+name+") AND gas="+name+";";
+    std::string query = "SELECT * FROM "+dat.getName()+"."+dat.getTable()+" WHERE date=(SELECT MAX(date) FROM "+dat.getName()+"."+dat.getTable()+" WHERE gas=\""+name+"\") AND gas=\""+name+"\";";
+    std::cout<<query<<std::endl;
     mariadb::result_set_ref result = dat()->query(query);
     if(result->row_count()==0) return "";
     else
@@ -83,7 +84,7 @@ int main()
 
 	for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
     	{
-            std::cout<<"****"<<checklastentry(usbtobottle[it->first],database)<<"***"<<std::endl;
+            std::cout<<"****"<<checklastentry(it->first,database)<<"***"<<std::endl;
        		std::string buffer;
        		it->second.read(buffer,13);
        		std::cout<<it->first<<" : "<<buffer<<std::endl;
