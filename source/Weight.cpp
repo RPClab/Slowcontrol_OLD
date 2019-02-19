@@ -75,21 +75,19 @@ std::string exec(const char* cmd) {
     return result;
 }
 
-std::string checklastentry(const std::string& name, Database& dat)
+Value checklastentry(const std::string& name, Database& dat)
 {
     std::string query = "SELECT * FROM "+dat.getName()+"."+dat.getTable()+" WHERE date=(SELECT MAX(date) FROM "+dat.getName()+"."+dat.getTable()+" WHERE gas=\""+name+"\") AND gas=\""+name+"\";";
     //std::cout<<query<<std::endl;
     mariadb::result_set_ref result = dat()->query(query);
     std::cout<<"Result"<<result->row_count()<<std::endl;
-    if(result->row_count()==0) return "";
+    if(result->row_count()==0) return Value("");
     else
     {
             result->set_row_index(0);
-            return std::to_string(result->get_double(2));
+            return Value(result->get_double(2));
     }
 }
-
-
 
 int main()
 {
@@ -134,7 +132,7 @@ int main()
     mariadb::date_time tim(ti);
     for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
     {
-        if(checklastentry(it->first,database)=="")
+        if(checklastentry(it->first,database).String()=="")
         {
             weight wei;
             do
@@ -152,14 +150,53 @@ int main()
     }
    while(1)
    {
-
+    int nbriteration=50;
+    std::time_t ti= ::time(nullptr);
+    mariadb::date_time tim(ti);
 	for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
     {
-            std::cout<<checklastentry(it->first,database)<<"***"<<std::endl;
-       		std::string buffer;
-       		it->second.read(buffer,13);
-       		//std::cout<<it->first<<" : "<<buffer<<std::endl;
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        double value=0;
+        for(unsigned int i=0;i!=nbriteration;++i)
+        {
+            // Access New Value :
+            weight wei;
+            do
+            {
+                std::string buffer;
+                it->second.read(buffer,13);
+                wei.parse(buffer);
+            }
+            while(wei.isGood()==false);
+            double last =checklastentry(it->first,database).Double();
+            double neww =wei.getWeight().Double();
+            if((neww-last)/last>=0.05)
+            {
+                if(i==0)
+                {
+                    std::cout<<"New Bottle of "<<it->first<<" suspected "<<std::endl;
+                    std::cout<<"Trying to check if it's true ! "<<std::endl;
+                }
+                std::cout<<"Iteration nbr "<<i<<"/"<<nbriteration<<std::endl;
+            }
+            else
+            {
+                ti= ::time(nullptr);
+                tim=ti;
+                std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,gas,weight,net_weight,new_bottle) VALUES (\"")+tim.str()+"\",\""+it->first+"\","+std::to_string(neww)+","+(wei.isNet() ? std::string("TRUE") : std::string("FALSE"))+",FALSE"+std::string(");");
+                 std::cout<<command<<std::endl;
+                database()->execute(command);
+                break;
+            }
+            if(i==nbriteration)
+            {
+                ti=::time(nullptr);
+                tim=ti;
+                std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,gas,weight,net_weight,new_bottle) VALUES (\"")+tim.str()+"\",\""+it->first+"\","+std::to_string(wei.getWeight().Double())+","+(wei.isNet() ? std::string("TRUE") : std::string("FALSE"))+",TRUE"+std::string(");");
+                std::cout<<command<<std::endl;
+                database()->execute(command);
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
 	}
 	std::this_thread::sleep_for(std::chrono::seconds(5));
    }
