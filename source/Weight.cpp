@@ -85,7 +85,7 @@ std::string checklastentry(const std::string& name, Database& dat)
     else
     {
             result->set_row_index(0);
-            return result->get_string(2);
+            return std::to_string(result->get_double(2));
     }
 }
 
