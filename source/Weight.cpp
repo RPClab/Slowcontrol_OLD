@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 #include <array>
-
+#include <cmath>
 
 class weight
 {
@@ -22,11 +22,17 @@ public:
         // The format for Gross Weight : ww000.000kg or ww000.000lb
         // The format for Net Weight : wn000.000kg or wn000.000lb
         // So :
-        if(arg.size()!=13) return;        
-	if(arg[1]!='w'&&arg[1]!='n') return;
-   	else if(arg[1]=='n')  m_isNet=true;
-        m_value=arg.substr(2,7);
-        if(arg.substr(9,2)=="lb") convert();
+        //std::cout<<arg<<"*****"<<arg.size()<<std::endl;
+	if(arg.size()!=12) return;
+        m_value=std::stof(arg.substr(2,6))/(std::pow(10,std::stoi(arg.substr(8,1))));
+        std::cout<<m_value<<std::endl;
+        //std::string unit=arg.substr(8,1);
+        //std::cout<<value<<"  "<<unit<<std::endl;        
+	//if(arg[1]!='w'&&arg[1]!='n') return;
+   	//else if(arg[1]=='n')  m_isNet=true;
+        
+        //m_value=arg.substr(2,7);
+        //if(arg.substr(9,2)=="lb") convert();
 	try
 	{
 		m_value.Double();
@@ -35,7 +41,7 @@ public:
         catch(...)
         {
         }
-	std::cout<<arg<<"***"<<m_value<<std::endl;
+	//std::cout<<arg<<"***"<<m_value<<std::endl;
     }
     Value getWeight()
     {
@@ -80,7 +86,7 @@ Value checklastentry(const std::string& name, Database& dat)
     std::string query = "SELECT * FROM "+dat.getName()+"."+dat.getTable()+" WHERE date=(SELECT MAX(date) FROM "+dat.getName()+"."+dat.getTable()+" WHERE gas=\""+name+"\") AND gas=\""+name+"\";";
     //std::cout<<query<<std::endl;
     mariadb::result_set_ref result = dat()->query(query);
-    std::cout<<"Result"<<result->row_count()<<std::endl;
+    //std::cout<<"Result"<<result->row_count()<<std::endl;
     if(result->row_count()==0) return Value("");
     else
     {
@@ -143,14 +149,14 @@ int main()
             }
             while(wei.isGood()==false);
             std::string command=std::string("INSERT INTO "+database.getName()+"."+database.getTable()+" (date,gas,weight,net_weight,new_bottle) VALUES (\"")+tim.str()+"\",\""+it->first+"\","+std::to_string(wei.getWeight().Double())+","+(wei.isNet() ? std::string("TRUE") : std::string("FALSE"))+",TRUE"+std::string(");");
-            std::cout<<command<<std::endl;
+            //std::cout<<command<<std::endl;
             database()->execute(command);
             
         }
     }
    while(1)
    {
-    int nbriteration=50;
+    int nbriteration=10;
     std::time_t ti= ::time(nullptr);
     mariadb::date_time tim(ti);
 	for(std::map<std::string,serial::Serial>::iterator it=weights.begin();it!=weights.end();++it)
@@ -169,6 +175,7 @@ int main()
             while(wei.isGood()==false);
             double last =checklastentry(it->first,database).Double();
             double neww =wei.getWeight().Double();
+            std::cout<<last<<"  "<<neww<<"  "<<(neww-last)/last*100<<" "<<0.05<<std::endl;
             if((neww-last)/last>=0.05)
             {
                 if(i==0)
@@ -187,7 +194,7 @@ int main()
                 database()->execute(command);
                 break;
             }
-            if(i==nbriteration)
+            if(i==nbriteration-1)
             {
                 ti=::time(nullptr);
                 tim=ti;
@@ -198,6 +205,6 @@ int main()
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 	}
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+	std::this_thread::sleep_for(std::chrono::seconds(600));
    }
 }
