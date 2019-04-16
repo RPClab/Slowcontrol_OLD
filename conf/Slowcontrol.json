@@ -1,18 +1,28 @@
  {
     "Database":
     {
-        "User":"sjturpc",
-        "Password": "RPC2018",
-        "Host":"10.42.0.1",
+        "User":"RPClab",
+        "Password": "20071990",
+        "Host":"192.168.1.200",
         "Database" : "SJTUrpc",
-        "Table" : "slowcontrol"
+        "Table" : "slowcontrol",
+	"Port":"3307"
     },
-    "Options":
+    "LabOptions":
     {
 	"Wait":"60",
 	"Device":"/dev/i2c-1",
 	"Type":"I2C",
-	"Adress":"0x76"
+	"Adress":"0x77",
+	"ID":"0"
+    },
+    "GasOptions":
+    {
+	"Wait":"60",
+	"Device":"/dev/i2c-1",
+	"Type":"I2C",
+	"Adress":"0x76",
+	"ID":"96"
     }
 }
 

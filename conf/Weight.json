@@ -1,11 +1,12 @@
  {
     "Database":
     {
-        "User":"sjturpc",
-        "Password": "RPC2018",
-        "Host":"10.42.0.1",
+        "User":"RPClab",
+        "Password": "20071990",
+        "Host":"192.168.1.200",
         "Database" : "SJTUrpc",
-        "Table" : "weight"
+        "Table" : "weight",
+	"Port":"3307"
     },
     "Options":
     {

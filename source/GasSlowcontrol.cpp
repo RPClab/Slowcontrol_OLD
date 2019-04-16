@@ -87,7 +87,7 @@ int main(int argc,char **argv)
 {
     struct bme280_dev dev;
     int8_t rslt = BME280_OK;
-    ConfigReader opt("Slowcontrol","Options");
+    ConfigReader opt("Slowcontrol","GasOptions");
     long time=opt.getParameter("Wait").Long();
     std::string device=opt.getParameter("Device").String();
     std::string type=opt.getParameter("Type").String();
@@ -125,7 +125,7 @@ int main(int argc,char **argv)
     dev.delay_ms = user_delay_ms;
     rslt = bme280_init(&dev);
     rslt= bme280_soft_reset(&dev);
-    int ID=static_cast<int>(dev.chip_id);
+    int ID=opt.getParameter("ID").Int();
     //Read ConfigFile
     ConfigReader conf("Slowcontrol","Database");
     //Connect to Database
