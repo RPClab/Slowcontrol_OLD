@@ -1,0 +1,14 @@
+[Unit]
+Description=Slowcontrol for RPClab providing P,T,H
+Wants=network-online.target
+After=network-online.target
+Wants=mariadb.service
+After=mariadb.service
+
+[Service]
+ExecStart=/home/alarm/Desktop/Slowcontrol/bin/LabSlowControl
+Environment="Slowcontrol=/home/alarm/Desktop/Slowcontrol/conf/Slowcontrol.json"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

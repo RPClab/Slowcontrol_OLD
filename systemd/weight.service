@@ -1,0 +1,15 @@
+[Unit]
+Description=Slowcontrol for gas bottle weight
+Wants=network-online.target
+After=network-online.target
+Wants=mariadb.service
+After=mariadb.service
+
+
+[Service]
+ExecStart=/home/alarm/Desktop/Slowcontrol/bin/Weight
+Environment="Slowcontrol=/home/alarm/Desktop/Slowcontrol/conf/Weight.json"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
